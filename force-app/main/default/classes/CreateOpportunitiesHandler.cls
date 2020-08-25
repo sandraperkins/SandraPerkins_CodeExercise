@@ -1,4 +1,5 @@
 public with sharing class CreateOpportunitiesHandler {
+    // takes in inserted accounts and create two default opportunities
     public static void createOpportunities(List<Account> accts) {
         List<Opportunity> oppList = new List<Opportunity>();
         for(Account a: accts) {
@@ -19,6 +20,10 @@ public with sharing class CreateOpportunitiesHandler {
         }
         insert oppList;
     }
+    /* checks updated accounts for a type change to 'Prospect'
+       checks if the default opportunities still exist
+       if they do not, then recreate them and send an email
+    */
     public static void checkOpportunities(List<Account> updatedAccts) {
         List<Opportunity> oppList = new List<Opportunity>();
             List<String> addresses = new List<String>();

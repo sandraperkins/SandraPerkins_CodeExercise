@@ -1,6 +1,7 @@
 @isTest
 public with sharing class CreateOpportunitiesHandler_Test {
     @isTest
+    // test creating default opportunities with only 1 account inserted
     public static void testCreateOppSingle(){
         Account testAccount = new Account(Name = 'Test Account', Type = 'Customer - Direct');
         insert testAccount;
@@ -8,6 +9,7 @@ public with sharing class CreateOpportunitiesHandler_Test {
         System.assertEquals(2, defaultOpps.size(), 'Opportunity size was not 2');
     }
     @isTest
+    // test creating default opportunities with multiple accounts inserted
     public static void testCreateOppBatch() {
         List<Account> accounts = new List<Account>();
         for(Integer i=0; i<5; i++) {
@@ -23,6 +25,7 @@ public with sharing class CreateOpportunitiesHandler_Test {
         System.assertEquals(10, defaultOpps.size(), 'Opportunity size was not 10');
     }
     @isTest
+    // test deleting default opportunities and recreating them with 1 account inserted
     public static void testcheckOppSingle() {
         Account testAccount = new Account(Name = 'Test Account 2', Type = 'Customer - Direct');
         insert testAccount;
@@ -34,6 +37,7 @@ public with sharing class CreateOpportunitiesHandler_Test {
         System.assertEquals(2, defaultOpps.size(), 'Opportunity size was not 2');
     }
     @isTest
+    // test deleting default opportunities and recreating them with multiple accounts inserted
     public static void testcheckOppBatch() {
         List<Account> accounts = new List<Account>();
             for(Integer i=0; i<5; i++) {
