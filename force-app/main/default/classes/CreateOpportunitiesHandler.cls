@@ -1,55 +1,71 @@
 public with sharing class CreateOpportunitiesHandler {
-    public static void createOpportunities(List<Account> accts, Boolean createResidential, Boolean createCommercial) {
+    public static void createOpportunities(List<Account> accts) {
         List<Opportunity> oppList = new List<Opportunity>();
-        for(Account a : accts) {
-            if(createResidential) {
-                Opportunity residentialOpp = new Opportunity(
-                    Name = 'Default Residential Opp',
-                    StageName = 'Prospecting',
-                    CloseDate = Date.today() + 30,
-                    AccountId = a.Id
-                );
-                oppList.add(residentialOpp);
-            }
-            if(createCommercial) {
-                Opportunity commercialOpp = new Opportunity(
-                    Name = 'Default Commercial Opp',
-                    StageName = 'Prospecting',
-                    CloseDate = Date.today() + 30,
-                    AccountId = a.Id
-                );
-                oppList.add(commercialOpp);
-            }
-            
+        for(Account a: accts) {
+            Opportunity residentialOpp = new Opportunity(
+                Name = 'Default Residential Opp',
+                StageName = 'Prospecting',
+                CloseDate = Date.today() + 30,
+                AccountId = a.Id
+            );
+            oppList.add(residentialOpp);
+            Opportunity commercialOpp = new Opportunity(
+                Name = 'Default Commercial Opp',
+                StageName = 'Prospecting',
+                CloseDate = Date.today() + 30,
+                AccountId = a.Id
+            );
+            oppList.add(commercialOpp);
         }
         insert oppList;
     }
     public static void checkOpportunities(List<Account> updatedAccts) {
         List<Opportunity> oppList = new List<Opportunity>();
-        Boolean createResidential = false;
-        Boolean createCommercial = false;
-        
-        List<Account> acctsWithOpps = 
-            [SELECT Id, (SELECT Name FROM Opportunities WHERE Name LIKE 'Default%') FROM Account
-            WHERE Id IN :updatedAccts AND Type = 'Prospect'];
-        System.debug('acctsWithOpps: ' + acctsWithOpps);
-
-        for(Account a : acctsWithOpps) {
-            List<Opportunity> defaultOpps = a.Opportunities;
-            System.debug('defaultOpps: ' + defaultOpps);
-            List<String> oppNames = new List<String>();
-            for(Opportunity opp : defaultOpps) {
-                oppNames.add(opp.Name);
-            }
-            if(defaultOpps.size() < 2) {
-                if(!oppNames.contains('Default Residential Opp')) {
-                    createResidential = true;
+            List<String> addresses = new List<String>();
+            List<Account> acctsWithOpps = 
+                    [SELECT Id, Owner.Email, (SELECT Name FROM Opportunities WHERE Name LIKE 'Default%') FROM Account
+                    WHERE Id IN :updatedAccts AND Type = 'Prospect'];
+                System.debug('acctsWithOpps: ' + acctsWithOpps);
+                List<Opportunity> oppsToCreate = new List<Opportunity>();
+                for(Account a : acctsWithOpps) {
+                    Boolean createResidential = false;
+                    Boolean createCommercial = false;
+                    List<Opportunity> defaultOpps = a.Opportunities;
+                    System.debug('defaultOpps: ' + defaultOpps.size());
+                    List<String> oppNames = new List<String>();
+                    for(Opportunity opp : defaultOpps) {
+                        oppNames.add(opp.Name);
+                    }
+                    if(defaultOpps.size() < 2) {
+                        if(!oppNames.contains('Default Residential Opp')) {
+                            createResidential = true;
+                            Opportunity residentialOpp = new Opportunity(
+                                Name = 'Default Residential Opp',
+                                StageName = 'Prospecting',
+                                CloseDate = Date.today() + 30,
+                                AccountId = a.Id
+                            );
+                            oppsToCreate.add(residentialOpp);
+                        }
+                        if(!oppNames.contains('Default Commercial Opp')) {
+                            createCommercial = true;
+                            Opportunity commercialOpp = new Opportunity(
+                                Name = 'Default Commercial Opp',
+                                StageName = 'Prospecting',
+                                CloseDate = Date.today() + 30,
+                                AccountId = a.Id
+                            );
+                            oppsToCreate.add(commercialOpp);
+                        }
+                    }
+                    if(createResidential || createCommercial) {
+                        addresses.add(a.Owner.Email);
+                    }
                 }
-                if(!oppNames.contains('Default Commercial Opp')) {
-                    createCommercial = true;
-                }
-                createOpportunities(updatedAccts, createResidential, createCommercial);
-            }
-        }
+                insert oppsToCreate;
+                System.debug('email addresses: ' + addresses);
+                String subject = 'Account Opportunities Changed';
+                String body = 'This email is to inform you that the default opportunities on an account you own were altered or deleted. They have since been restored.';
+                EmailManager.sendMail(addresses, subject, body);
     }
 }
